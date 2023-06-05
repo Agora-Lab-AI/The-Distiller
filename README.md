@@ -1,3 +1,11 @@
+# Agora
+Agora is the new open source Multi-Modality AI Research Organization devoted to advancing Humanity!
+
+![Agora banner](agora-banner.png)
+
+[Join our Agora discord and contribute to this project or 40+ others!](https://discord.gg/qUtxnK2NMf)
+
+
 # The Distiller
 
 `The Distiller` is a command-line interface and a Python library for inferencing Large Language Models to generate textual or multi-modal datasets.
