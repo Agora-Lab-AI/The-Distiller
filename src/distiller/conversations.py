@@ -21,6 +21,8 @@ GENERATOR_CONFIG_KEYS = ["lengths", "temperatures", "initial_utterances"]
 
 @dataclass
 class ConversationsGeneratorConfig:
+    agents: List[str]
+    """List of agent descriptions to construct their system message"""
     agent_type: str
     """type of language odel either openai or huggingface"""
     hf_id: str
@@ -74,6 +76,12 @@ class ConversationsGenerator(DatasetGenerator):
         conversation_config: Dict[str, Any]
     ) -> Tuple[ConversationChain, str]:
         """Initialize a conversation and return a chain and a formatted system prompt."""
+        # chains = []
+        # systems_prompt = []
+        # # for agent in self.config.agents:
+        #     chain, system_prompt = self.initalize_chain(agent, agent, conversation_config)
+        #     chains.append(chain)
+        #     systems_prompt.append(system_prompt)
         if self.config.interruption == "end_phrase":
             if self.config.end_agent == agent or self.config.end_agent == "both":
                 system_prompt += f" When the whole conversation is over end with \"{self.config.end_phrase}\"."
@@ -103,6 +111,18 @@ class ConversationsGenerator(DatasetGenerator):
         chain = ConversationChain(memory=memory, prompt=prompt, llm=llm)
 
         return chain, system_message
+    
+    def initialize_chains(
+            self,
+            conversation_config: Dict[str, Any]
+        ) -> Tuple[List[ConversationChain], List[str]]:
+        chains = []
+        system_prompts = []
+        for agent in self.config.agents:
+            chain, system_prompt = self.initialize_chain(agent, agent, conversation_config)
+            chains.append(chain)
+            system_prompts.append(system_prompt)
+        return chains, system_prompts
 
     def end_phrase_interruption(self, agent: str, message: str) -> bool:
         """Check whether to interrupt conversation generation."""
@@ -121,33 +141,51 @@ class ConversationsGenerator(DatasetGenerator):
         conversation_config = self.options_configs[self.generator_index]
         self.generator_index += 1
 
-        chain1, system_prompt1 = self.initialize_chain("agent1",
-                                                       self.config.agent1,
-                                                       conversation_config)
+        # chain1, system_prompt1 = self.initialize_chain("agent1",
+        #                                                self.config.agent1,
+        #                                                conversation_config)
 
-        chain2, system_prompt2 = self.initialize_chain("agent2",
-                                                       self.config.agent2,
-                                                       conversation_config)
+        # chain2, system_prompt2 = self.initialize_chain("agent2",
+        #                                                self.config.agent2,
+        #                                                conversation_config)
+
+        chains, system_prompts = self.initialize_chain(conversation_config)
 
         utterances = []
 
-        chain1_inp = conversation_config["initial_utterance"]
+        # chain1_inp = conversation_config["initial_utterance"]
+        # for _ in range(conversation_config["length"]):
+        #     chain1_out = chain1.predict(input=chain1_inp)
+        #     utterances.append(["agent1", chain1_out])
+
+        #     if self.end_phrase_interruption("agent1", chain1_out):
+        #         break
+
+        #     chain2_out = chain2.predict(input=chain1_out)
+        #     utterances.append(["agent2", chain2_out])
+
+        #     if self.end_phrase_interruption("agent2", chain2_out):
+        #         break
+
+        #     chain1_inp = chain2_out
+
+        chain_inp = conversation_config["initial_utterance"]
         for _ in range(conversation_config["length"]):
-            chain1_out = chain1.predict(input=chain1_inp)
-            utterances.append(["agent1", chain1_out])
+            for i, chain in enumerate(chains):
+                agent = f"agent{i + 1}"
+                chain_out = chain.predict(input=chain_inp)
+                utterances.append([agent, chain_out])
 
-            if self.end_phrase_interruption("agent1", chain1_out):
-                break
+                if self.end_phrase_interruption(agent, chain_out):
+                    break
 
-            chain2_out = chain2.predict(input=chain1_out)
-            utterances.append(["agent2", chain2_out])
+                chain_inp = chain_out
 
-            if self.end_phrase_interruption("agent2", chain2_out):
-                break
-
-            chain1_inp = chain2_out
+        # return {**conversation_config,
+        #         "agent1": system_prompt1,
+        #         "agent2": system_prompt2,
+        #         "utterances": utterances}
 
         return {**conversation_config,
-                "agent1": system_prompt1,
-                "agent2": system_prompt2,
+                **{f"agent{i + 1}": system_prompts[i] for i in range(len(system_prompts))},
                 "utterances": utterances}

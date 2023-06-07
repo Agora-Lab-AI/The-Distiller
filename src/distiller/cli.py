@@ -49,6 +49,14 @@ click_temperatures = click.option("--temperature",
 
 
 @click.command()
+@click.option("--agents",
+              "-a",
+              "agents",
+              type=str,
+              multiple=True,
+              required=True,
+              help="Agent role descriptions.")
+
 @click.option("--hf-api-token",
               "-hf",
               type=str,
@@ -122,6 +130,7 @@ click_temperatures = click.option("--temperature",
 @click_path
 @click_single_file
 def conversations(
+    agents: List[str],
     openai_api_key: str,
     agent1: str,
     agent2: str,
@@ -139,7 +148,8 @@ def conversations(
     """Produce conversations between two gpt-3.5-turbo agents with given roles."""
     dataset_writer = DatasetWriter(path, single_file)
 
-    generator_config = ConversationsGeneratorConfig(openai_api_key=openai_api_key,
+    generator_config = ConversationsGeneratorConfig(agents=agents,
+                                                    openai_api_key=openai_api_key,
                                                     agent1=agent1,
                                                     agent2=agent2,
                                                     initial_utterances=initial_utterances,
@@ -184,6 +194,7 @@ def conversations(
 @click_path
 @click_single_file
 def texts(
+    agents: List[str],
     prompt: str,
     num_samples: int,
     max_lengths: List[int],
@@ -196,7 +207,8 @@ def texts(
     """Inference multiple LLMs at scale."""
     dataset_writer = DatasetWriter(path, single_file)
 
-    generator_config = TextsGeneratorConfig(prompt=prompt,
+    generator_config = TextsGeneratorConfig(agents=agents,
+                                            prompt=prompt,
                                             backends=backends,
                                             num_samples=num_samples,
                                             max_lengths=max_lengths,

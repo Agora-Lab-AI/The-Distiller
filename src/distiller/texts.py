@@ -13,6 +13,8 @@ GENERATOR_CONFIG_KEYS =  ["backends", "max_lengths", "temperatures"]
 
 @dataclass
 class TextsGeneratorConfig:
+    agents: List[str]
+    """An array that allows you to dynamically scale up agents"""
     prompt: str
     """Text prompt."""
     backends: List[Tuple[str, str, str]]
@@ -68,10 +70,22 @@ class TextsGenerator(DatasetGenerator):
             llm = Petals(model_name=model,
                          temperature=temperature,
                          max_new_tokens=max_length)
+        elif backend.lower() == "huggingface":
+            from langchain import HuggingFaceHub
+            llm = HuggingFaceHub(repo_id=model, 
+                                    temperature=temperature,
+                                    max_tokens=max_length)
         else:
             raise ValueError("Cannot use the specified backend.")
 
         return llm
+    
+    def initialize_backends(self, text_config: Dict[str, Any]) -> List[BaseLLM]:
+        backends = []
+        for _ in self.config.agents:
+            backend = self.initialize_backend(text_config)
+            backends.append(backend)
+            return backends
 
     def generate_item(self) -> Dict[str, Union[List[List[Any]], float, int]]:
         """Produce text with a LLM Chain."""
@@ -94,9 +108,42 @@ class TextsGenerator(DatasetGenerator):
         prompt_params = {k: text_config[k] for k in input_variables}
         input_prompt = prompt_template.format(**prompt_params)
 
-        chain = LLMChain(prompt=prompt_template, llm=llm)
-        output = chain.predict(**prompt_params)
+        # chain = LLMChain(prompt=prompt_template, llm=llm)
+        # output = chain.predict(**prompt_params)
+
+        # return {**text_config,
+        #         "prompt": input_prompt,
+        #         "output": output}
+
+        backends = self.initialize_backends(text_config)
+
+        outputs = []
+        for backend in backends:
+            chain = LLMChain(prompt=prompt_template, llm=backend)
+            output = chain.predict(**prompt_params)
+            outputs.append(output)
 
         return {**text_config,
                 "prompt": input_prompt,
-                "output": output}
+                "outputs": outputs}
+
+
+agents = [
+    "You're a shop assistant in a pet store. Answer to customer questions politely.",
+    "You're a customer in a pet store. You should behave like a human. You want to buy {n} pets. Ask questions about the pets in the store.",
+    "You're another customer in the pet store. You should behave like a human. You want to buy {n} pets. Ask questions about the pets in the store."
+]
+
+generator_config = TextsGeneratorConfig(prompt="your prompt",
+                                        agents = agents,
+                                        backends=[('huggingface', 'distilgpt', '')],
+                                        num_samples=2,
+                                        max_lengths=[49],
+                                        temperatures=[0.1, 0.2],
+                                        options=[("n", "n"), ("n", "3")])
+
+
+texts_generator = TextsGenerator(generator_config)
+
+for text in texts_generator:
+    print(text)
