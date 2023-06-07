@@ -1,5 +1,5 @@
 # Agora
-Agora is the new open source Multi-Modality AI Research Organization devoted to advancing Humanity!
+Agora is an new open source Multi-Modality AI Research Organization devoted to advancing Humanity!
 
 ![Agora banner](agora-banner.png)
 
@@ -267,6 +267,8 @@ Options:
 
 
 # Roadmap
+
+* Dynamically scale up agent instances, 2, 4, 100, 1000, all conversating with eachother.
 
 * Add Hugginggace polymorphic function to use any model on hf
 
