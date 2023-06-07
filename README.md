@@ -268,6 +268,8 @@ Options:
 
 # Roadmap
 
+* Conversation transformations like chain of thought prompting, conversational summaries, step by step breakdowns of conversations, explain your rational
+
 * Dynamically scale up agent instances, 2, 4, 100, 1000, all conversating with eachother.
 
 * Add Hugginggace polymorphic function to use any model on hf
