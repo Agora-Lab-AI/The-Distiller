@@ -76,12 +76,6 @@ class ConversationsGenerator(DatasetGenerator):
         conversation_config: Dict[str, Any]
     ) -> Tuple[ConversationChain, str]:
         """Initialize a conversation and return a chain and a formatted system prompt."""
-        # chains = []
-        # systems_prompt = []
-        # # for agent in self.config.agents:
-        #     chain, system_prompt = self.initalize_chain(agent, agent, conversation_config)
-        #     chains.append(chain)
-        #     systems_prompt.append(system_prompt)
         if self.config.interruption == "end_phrase":
             if self.config.end_agent == agent or self.config.end_agent == "both":
                 system_prompt += f" When the whole conversation is over end with \"{self.config.end_phrase}\"."
@@ -141,33 +135,10 @@ class ConversationsGenerator(DatasetGenerator):
         conversation_config = self.options_configs[self.generator_index]
         self.generator_index += 1
 
-        # chain1, system_prompt1 = self.initialize_chain("agent1",
-        #                                                self.config.agent1,
-        #                                                conversation_config)
-
-        # chain2, system_prompt2 = self.initialize_chain("agent2",
-        #                                                self.config.agent2,
-        #                                                conversation_config)
-
         chains, system_prompts = self.initialize_chain(conversation_config)
 
         utterances = []
 
-        # chain1_inp = conversation_config["initial_utterance"]
-        # for _ in range(conversation_config["length"]):
-        #     chain1_out = chain1.predict(input=chain1_inp)
-        #     utterances.append(["agent1", chain1_out])
-
-        #     if self.end_phrase_interruption("agent1", chain1_out):
-        #         break
-
-        #     chain2_out = chain2.predict(input=chain1_out)
-        #     utterances.append(["agent2", chain2_out])
-
-        #     if self.end_phrase_interruption("agent2", chain2_out):
-        #         break
-
-        #     chain1_inp = chain2_out
 
         chain_inp = conversation_config["initial_utterance"]
         for _ in range(conversation_config["length"]):
@@ -181,10 +152,6 @@ class ConversationsGenerator(DatasetGenerator):
 
                 chain_inp = chain_out
 
-        # return {**conversation_config,
-        #         "agent1": system_prompt1,
-        #         "agent2": system_prompt2,
-        #         "utterances": utterances}
 
         return {**conversation_config,
                 **{f"agent{i + 1}": system_prompts[i] for i in range(len(system_prompts))},

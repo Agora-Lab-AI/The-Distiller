@@ -131,6 +131,7 @@ click_temperatures = click.option("--temperature",
 @click_single_file
 def conversations(
     agents: List[str],
+    repo_id: str,
     openai_api_key: str,
     agent1: str,
     agent2: str,
